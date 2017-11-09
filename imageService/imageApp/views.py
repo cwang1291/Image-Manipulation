@@ -2,6 +2,8 @@
 from __future__ import unicode_literals
 from django.shortcuts import render, HttpResponse
 import os
+import datetime
+from django.core.files.images import get_image_dimensions
 
 
 # Create your views here.
@@ -13,6 +15,14 @@ def handleGETandPOST(request):
         return render(request, 'index.html', {'what':'Django File Upload'})
 
     if request.method == 'POST':
+        file_type = request.FILES['file'].content_type.split('/')[1]
+        file_size = request.FILES['file']._size
+        w, h = get_image_dimensions(request.FILES['file'])
+        print 'file type: ', file_type
+        print 'filesize: ', file_size
+        print 'width: ', w
+        print 'height: ', h
+        print 'timestamp: ', datetime.datetime.now()
         handle_uploaded_file(request.FILES['file'], str(request.FILES['file']))
         return HttpResponse("Successful")
  

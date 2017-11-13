@@ -1,18 +1,16 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseNotFound
 import os
 import datetime
 from django.core.files.images import get_image_dimensions
 from PIL import Image as PIL
 from .models import Image
+from mimetypes import guess_type
+
 import json
-from django.core import serializers
 from django.core.exceptions import ObjectDoesNotExist
-from django.core import serializers
-
-
 
 
 
@@ -38,7 +36,6 @@ def find():
 def findOne(id):
     try:
         im = Image.objects.get(id=id)
-        print im
         response_data = {}
         response_data['image_size'] = im.image_size
         response_data['image_type'] = im.image_type
@@ -51,7 +48,6 @@ def findOne(id):
         return None
 
 def handleCRUD(request, id=None):
-
     if (request.method == 'GET'): 
         if not (id is None):
             response_data = findOne(id)
@@ -62,8 +58,6 @@ def handleCRUD(request, id=None):
         else: 
             response_data = find()
             return HttpResponse(json.dumps(response_data))
-
-
 
 
     if request.method == 'POST':
@@ -79,20 +73,20 @@ def handleCRUD(request, id=None):
         w, h = get_image_dimensions(request.FILES['file'])
         now = datetime.datetime.now()
 
-        Image.objects.create(image=request.FILES['file'], image_type=image_type, image_size=image_size, image_width=w, image_height=h)
+        Image.objects.create(data=request.FILES['file'], image_type=image_type, image_size=image_size, image_width=w, image_height=h)
 
-
-        handle_uploaded_file(request.FILES['file'], str(request.FILES['file']))
         return HttpResponse("Successful")
 
     return HttpResponse("Failed")
 
 
+def serve_image(request, id):
+    return render(request, 'image.html', {'image_id': id})
 
-def handle_uploaded_file(file, filename):
-    if not os.path.exists('upload/'):
-        os.mkdir('upload/')
- 
-    with open('upload/' + filename, 'wb+') as destination:
-        for chunk in file.chunks():
-            destination.write(chunk)
+def get_photo(request, id):
+    image = get_object_or_404(Image, pk=id)
+    if not image.data:
+        raise Http404
+    content_type = guess_type(image.data.url)
+    return HttpResponse(image.data, content_type=content_type)
+    

@@ -8,17 +8,10 @@ from django.core.files.images import get_image_dimensions
 from PIL import Image as PIL
 from .models import Image
 from mimetypes import guess_type
-
 import json
 from django.core.exceptions import ObjectDoesNotExist
 
 
-
-# Create your views here.
-def home(request):
-    return render(request, 'index.html', {'what':'Django File Upload'})
-
- 
 def find():
     response_data = []
     image_list = Image.objects.all()
@@ -48,7 +41,7 @@ def findOne(id):
         return None
 
 def handleCRUD(request, id=None):
-    if (request.method == 'GET'): 
+    if request.method == 'GET':
         if not (id is None):
             response_data = findOne(id)
             if not (response_data is None):
@@ -63,7 +56,7 @@ def handleCRUD(request, id=None):
     if request.method == 'POST':
         try: 
             im = PIL.open(request.FILES['file'])
-            if im.format not in ('PNG', 'JPEG'):
+            if im.format not in ('PNG', 'JPEG', 'GIF'):
                 return HttpResponseBadRequest('invalid image type') 
         except Exception:
             return HttpResponseBadRequest('please upload an image file')
@@ -75,6 +68,10 @@ def handleCRUD(request, id=None):
 
         Image.objects.create(data=request.FILES['file'], image_type=image_type, image_size=image_size, image_width=w, image_height=h)
 
+        return HttpResponse("Successful")
+
+    if request.method == 'PUT':
+        # TODO        
         return HttpResponse("Successful")
 
     return HttpResponse("Failed")
@@ -89,4 +86,5 @@ def get_photo(request, id):
         raise Http404
     content_type = guess_type(image.data.url)
     return HttpResponse(image.data, content_type=content_type)
+
     
